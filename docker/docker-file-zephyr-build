@@ -22,6 +22,11 @@ RUN apt-get update && apt-get install -y \
     g++ \
     qemu-system-x86 \
     qemu-system-arm \
+    net-tools \
+    bridge-utils \
+    iproute2 \
+    iputils-ping \
+    tcpdump \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies for Zephyr
