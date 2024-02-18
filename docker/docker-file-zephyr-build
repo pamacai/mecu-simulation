@@ -1,0 +1,58 @@
+# Use a recent Ubuntu as a base
+FROM ubuntu:20.04
+
+# Avoid interactive dialog (e.g., timezone data) during installation
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    ninja-build \
+    gperf \
+    ccache \
+    dfu-util \
+    device-tree-compiler \
+    wget \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    make \
+    gcc \
+    g++ \
+    qemu-system-x86 \
+    qemu-system-arm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies for Zephyr
+RUN pip3 install west
+
+# Setup Zephyr SDK environment variable
+ENV ZEPHYR_SDK_INSTALL_DIR /opt/zephyr-sdk
+ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
+# Download and install the Zephyr SDK
+RUN wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.13.1/zephyr-sdk-0.13.1-linux-x86_64-setup.run && \
+    chmod +x zephyr-sdk-0.13.1-linux-x86_64-setup.run && \
+    ./zephyr-sdk-0.13.1-linux-x86_64-setup.run -- -d $ZEPHYR_SDK_INSTALL_DIR -y && \
+    rm zephyr-sdk-0.13.1-linux-x86_64-setup.run
+
+# Clone the Zephyr project
+RUN west init /zephyrproject
+WORKDIR /zephyrproject
+RUN west update
+RUN west zephyr-export
+RUN pip3 install -r zephyr/scripts/requirements.txt
+
+# Add your Zephyr application source to the Docker image
+# Replace `my_zephyr_app` with the path to your Zephyr application directory
+# ADD my_zephyr_app /zephyrproject/my_zephyr_app
+
+# Build the Zephyr application
+# Replace `my_board` with your target board, e.g., qemu_x86, qemu_cortex_m3
+# RUN west build -b my_board /zephyrproject/my_zephyr_app
+
+# Command to run the QEMU simulation
+# Adjust the command based on the target architecture and your application specifics
+# CMD ["west", "simulate"]
+CMD [ "bash" ]
