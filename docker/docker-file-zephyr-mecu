@@ -1,5 +1,5 @@
 # Use a recent Ubuntu as a base
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 # Avoid interactive dialog (e.g., timezone data) during installation
 ARG DEBIAN_FRONTEND=noninteractive
@@ -64,8 +64,6 @@ RUN pip3 install -r zephyr/scripts/requirements.txt
 # CMD [ "bash" ]
 
 COPY network_setup.sh /network_setup.sh
-COPY ./script-inside/udp_client.py /udp_client.py
-COPY ./script-inside/udp_server.py /udp_server.py
 RUN chmod +x /network_setup.sh
 
 # Assuming setup_network.sh is already added and has executable permissions
