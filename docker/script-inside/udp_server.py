@@ -1,7 +1,7 @@
 import socket
 
 # Server IP and port
-server_address = ('192.168.5.2', 10000)
+server_address = ('0.0.0.0', 10000)
 
 # Create a UDP socket
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:

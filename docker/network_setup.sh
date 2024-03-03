@@ -12,14 +12,6 @@ brctl addbr $LAN_BRIDGE
 ip addr add $LAN_IP dev $LAN_BRIDGE
 ip link set dev $LAN_BRIDGE up
 
-# Enable IP forwarding
-echo 1 > /proc/sys/net/ipv4/ip_forward
-
-# Configure NAT from LAN to WAN
-iptables -t nat -A POSTROUTING -o $WAN_INTERFACE -j MASQUERADE
-iptables -A FORWARD -i $LAN_BRIDGE -o $WAN_INTERFACE -j ACCEPT
-iptables -A FORWARD -i $WAN_INTERFACE -o $LAN_BRIDGE -m state --state RELATED,ESTABLISHED -j ACCEPT
-
 # Create a veth pair so application inside can talk outside
 ip link add veth0 type veth peer name veth1
 
@@ -31,7 +23,17 @@ ip link set veth0 up
 ip link set veth1 up
 
 # Assign an IP address to veth0
-ip addr add 192.168.5.2/24 dev veth0
+ip addr add 192.168.5.10/24 dev veth0
+
+#
+# Enable IP forwarding
+# echo 1 > /proc/sys/net/ipv4/ip_forward
+sysctl -w net.ipv4.ip_forward=1
+
+# Configure NAT from LAN to WAN
+iptables -t nat -A POSTROUTING -s 192.168.5.0/24 ! -o br_internal -j MASQUERADE
+iptables -A FORWARD -i br_internal -o eth0 -j ACCEPT
+iptables -A FORWARD -i eth0 -o br_internal -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # Optional: Configure additional LAN interfaces or services here
 
@@ -42,3 +44,8 @@ ip addr add 192.168.5.2/24 dev veth0
 # Keep the container running so that network tools can be used interactively
 # Comment or remove if your main process keeps the container alive
 tail -f /dev/null
+
+# Keep the docker running
+while [ true ];  do
+    sleep 2
+done
