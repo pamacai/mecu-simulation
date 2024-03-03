@@ -3,7 +3,7 @@ import socket
 import time
 
 # The address of the server running on the host
-host_address = (192.168.2.26, 10000)  # Replace <host_lan_ip> with the host's LAN IP address
+host_address = ('192.168.2.26', 10000)  # Replace <host_lan_ip> with the host's LAN IP address
 # Bind to this specific interface
 local_bind_address = ('192.168.5.10', 0)  # Assuming this is the desired source IP
 
