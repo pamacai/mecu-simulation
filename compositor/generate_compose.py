@@ -2,7 +2,13 @@ import ipaddress
 import sys
 import yaml
 
-def generate_dns_zone_file(num_hosts, subnet, base_hostname="host", domain="example.com"):
+# Example usages: python3 generate_compose.py 192.168.1.0/24 5 frank-qemu-simulator-1 example.com
+#   subnet of docker bridge:      "192.168.1.0/24",
+#   number of host:               "5",
+#   dockerimage for instance:      "frank-qemu-simulator-1",
+#   sub domain name:              "example.com"
+
+def generate_dns_zone_file(num_hosts, subnet, domain, base_hostname="host"):
     net = ipaddress.ip_network(subnet)
     usable_hosts = list(net.hosts())
 
@@ -23,7 +29,7 @@ def generate_dns_zone_file(num_hosts, subnet, base_hostname="host", domain="exam
             hostname = f"{base_hostname}{i}"
             dns_file.write(f"{hostname}    IN    A    {host_ip}\n")
 
-def generate_docker_compose(subnet, num_hosts):
+def generate_docker_compose(subnet, num_hosts, docker_image, domain):
     net = ipaddress.ip_network(subnet)
     usable_hosts = list(net.hosts())
 
@@ -46,9 +52,9 @@ def generate_docker_compose(subnet, num_hosts):
 
     # DNS Server Service
     services["services"]["dns-server"] = {
-        "image": "my-dns-server",
+        "image": docker_image,
         "container_name": "dns-server",
-        "hostname": "ns.example.com",
+        "hostname": f"ns.{domain}",
         "networks": {
             "my_custom_network": {
                 "ipv4_address": str(usable_hosts[0])
@@ -63,9 +69,11 @@ def generate_docker_compose(subnet, num_hosts):
         host_ip = usable_hosts[i]
         service_name = f"host{i}"
         services["services"][service_name] = {
-            "image": "ubuntu:20.04",
+            "image": docker_image,
             "container_name": service_name,
-            "hostname": f"{service_name}.example.com",
+            "hostname": f"{service_name}.{domain}",
+            "privileged": True,
+            "stdin_open": True,
             "networks": {
                 "my_custom_network": {
                     "ipv4_address": str(host_ip)
@@ -77,20 +85,20 @@ def generate_docker_compose(subnet, num_hosts):
     return services
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python generate_compose.py <subnet> <num_hosts>")
+    if len(sys.argv) < 5:
+        print("Usage: python generate_compose.py <subnet> <num_hosts> <docker_image> <domain>")
         sys.exit(1)
 
     subnet = sys.argv[1]
     num_hosts = int(sys.argv[2])
-    base_hostname = "host"
-    domain = "example.com"
+    docker_image = sys.argv[3]
+    domain = sys.argv[4]
 
     # Generate DNS zone file
-    generate_dns_zone_file(num_hosts, subnet, base_hostname, domain)
+    generate_dns_zone_file(num_hosts, subnet, domain)
 
     # Generate Docker Compose file
-    compose_content = generate_docker_compose(subnet, num_hosts + 1)  # +1 for DNS server
+    compose_content = generate_docker_compose(subnet, num_hosts + 1, docker_image, domain)  # +1 for DNS server
     if compose_content:
         with open("docker-compose.yml", "w") as file:
             yaml.dump(compose_content, file, default_flow_style=False)
