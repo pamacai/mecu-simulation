@@ -11,3 +11,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
     while True:
         data, addr = sock.recvfrom(1024)
         print(f"Received message: {data.decode()} from {addr}")
+
+        # Echo back the received message
+        sock.sendto(data, addr)
+        print(f"Echoed back message to {addr}")
