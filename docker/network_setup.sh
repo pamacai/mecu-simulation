@@ -33,8 +33,8 @@ sysctl -w net.ipv4.ip_forward=1
 # Configure NAT from LAN to WAN
 iptables -t nat -A POSTROUTING -s 192.168.5.0/24 ! -o br_internal -j MASQUERADE
 iptables -A FORWARD -i eth0 -o br_internal -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -t nat -A PREROUTING -p udp --dport 10000 -j DNAT --to-destination 192.168.5.10:10000
-iptables -A FORWARD -p udp -d 192.168.5.10 --dport 10000 -j ACCEPT
+iptables -t nat -A PREROUTING -p udp -j DNAT --to-destination 192.168.5.10
+iptables -A FORWARD -p udp -d 192.168.5.10 -j ACCEPT
 
 # Optional: Configure additional LAN interfaces or services here
 
