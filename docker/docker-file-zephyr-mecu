@@ -66,7 +66,7 @@ RUN pip3 install -r zephyr/scripts/requirements.txt
 # CMD ["west", "simulate"]
 # CMD [ "bash" ]
 
-COPY network_setup.sh /network_setup.sh
+COPY script-inside//network_setup.sh /network_setup.sh
 COPY script-inside/udp_client.py /udp_client.py
 RUN chmod +x /network_setup.sh
 RUN chmod +x /udp_client.py

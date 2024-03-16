@@ -1,0 +1,32 @@
+# Start from a Zephyr build environment
+FROM zephyrprojectrtos/zephyr-build:latest
+
+# Install QEMU (if not included in the base image)
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /zephyrproject
+
+# Clone the Zephyr repository
+RUN git clone https://github.com/zephyrproject-rtos/zephyr.git
+
+# Install Python dependencies for Zephyr
+RUN pip3 install -r zephyr/scripts/requirements.txt
+
+# Set up Zephyr SDK environment variable, replace this with the actual SDK path if needed
+ENV ZEPHYR_SDK_INSTALL_DIR /opt/sdk/zephyr-sdk-0.13.1
+ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
+# Initialize the Zephyr environment
+RUN west init -l zephyr/ && west update && west zephyr-export
+
+# Optional: Copy your Zephyr application into the container, or you can mount it at runtime
+# COPY my_zephyr_app /zephyrproject/my_zephyr_app
+
+# Build the Zephyr application (specify your app and board)
+# RUN west build -b qemu_cortex_m3 /zephyrproject/my_zephyr_app
+
+# Command to keep the container running, replace this with specific command as needed
+CMD ["/bin/bash"]
