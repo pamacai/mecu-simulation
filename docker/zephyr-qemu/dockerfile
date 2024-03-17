@@ -1,0 +1,102 @@
+# Use Ubuntu 22.04 as the base image
+FROM ubuntu:22.04
+
+# Avoid interactive dialog during package installation
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Update and install required packages
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    ninja-build \
+    gperf \
+    ccache \
+    dfu-util \
+    device-tree-compiler \
+    wget \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    xz-utils \
+    file \
+    make \
+    gcc \
+    gcc-multilib \
+    g++-multilib \
+    libsdl2-dev \
+    qemu-system-arm \
+    qemu-system-x86 \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Install Python dependencies for Zephyr
+RUN pip3 install west
+
+# Setup Zephyr SDK environment variable
+ENV ZEPHYR_SDK_INSTALL_DIR /opt/zephyr-sdk
+ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
+# wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.0/zephyr-sdk-0.16.0-linux-x86_64-setup.run
+# chmod +x zephyr-sdk-0.16.0-linux-x86_64-setup.run
+# ./zephyr-sdk-0.16.0-linux-x86_64-setup.run
+
+# wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.0/zephyr-sdk-0.16.0-linux-x86_64-setup.run
+# chmod +x zephyr-sdk-0.16.0-linux-x86_64-setup.run
+# ./zephyr-sdk-0.16.0-linux-x86_64-setup.run
+
+# Install the latest Zephyr SDK
+# RUN wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.5-1/zephyr-sdk-0.16.5-1_linux-x86_64.tar.xz && \
+#     tar -xvf zephyr-sdk-0.16.5-1_linux-x86_64.tar.xz && \
+#     chmod +x zephyr-sdk-0.16.5-1/setup.sh && \
+#     # chmod +x zephyr-sdk-0.1.1-linux-x86_64-setup.run && \
+#     ./zephyr-sdk-0.16.5-1/setup.sh -- -d $ZEPHYR_SDK_INSTALL_DIR -y
+#     # rm zephyr-sdk-0.16.1-linux-x86_64-setup.run
+
+RUN wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.5-1/zephyr-sdk-0.16.5-1_linux-x86_64.tar.xz
+RUN mkdir -p $ZEPHYR_SDK_INSTALL_DIR
+RUN tar -xvf zephyr-sdk-0.16.5-1_linux-x86_64.tar.xz -C $ZEPHYR_SDK_INSTALL_DIR --strip-components=1
+WORKDIR $ZEPHYR_SDK_INSTALL_DIR
+RUN chmod +x $ZEPHYR_SDK_INSTALL_DIR/setup.sh
+#     # chmod +x zephyr-sdk-0.1.1-linux-x86_64-setup.run && \
+RUN $ZEPHYR_SDK_INSTALL_DIR/setup.sh -t arm-zephyr-eabi -h
+#     # rm zephyr-sdk-0.16.1-linux-x86_64-setup.run
+
+# Download and install the latest Zephyr SDK
+# To get the list of sdk
+# RUN wget $(wget -qO- https://api.github.com/repos/zephyrproject-rtos/sdk-ng/releases/latest | grep browser_download_url | grep -oP '"\K(.*?)(?=")') -O /common/tmp/zephyr-sdk-setup.run && \
+#     chmod +x /common/tmp/zephyr-sdk-setup.run && \
+#     /common/tmp/zephyr-sdk-setup.run -- -y -d /opt/zephyr-sdk && \
+#     rm /common/tmp/zephyr-sdk-setup.run
+
+
+# RUN mkdir -p /common/tmp/
+
+# RUN wget $(wget -qO- https://api.github.com/repos/zephyrproject-rtos/sdk-ng/releases/latest | grep browser_download_url | grep -oP '"\K(.*?)(?=")') -O /common/tmp/zephyr-sdk-setup.run
+# RUN chmod +x /common/tmp/zephyr-sdk-setup.run
+# RUN /common/tmp/zephyr-sdk-setup.run -- -y -d /opt/zephyr-sdk
+# RUN rm /common/tmp/zephyr-sdk-setup.run
+
+# Set the Zephyr SDK environment variable
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk
+ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
+# # Install Python dependencies for Zephyr
+# RUN pip3 install west
+
+# # Create a non-root user for the Zephyr build
+# RUN useradd -ms /bin/bash zephyruser
+# USER zephyruser
+WORKDIR /home/zephyruser
+
+# Clone the Zephyr project
+RUN west init /zephyrproject
+WORKDIR /zephyrproject
+RUN west update
+RUN west zephyr-export
+RUN pip3 install -r zephyr/scripts/requirements.txt
+
+# Set the entry point to the Zephyr project directory
+WORKDIR /home/zephyruser/zephyrproject
+
+# Command to keep the container running, replace this with specific command as needed
+CMD ["/bin/bash"]
